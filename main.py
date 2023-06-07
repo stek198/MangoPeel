@@ -109,6 +109,42 @@ class MangoPeel:
             except:
                 continue
         return False
+    
+    def update_session_config(self,configstr):
+        with open('/usr/bin/gamescope-session', 'r+') as f:
+            lines = f.readlines()
+            config_line=-1;
+            # 查找相关行，并覆写设置
+            for index, line in enumerate(lines):
+                if 'export MANGOHUD_CONFIG=' in line:
+                    lines[index] = 'export MANGOHUD_CONFIG=read_cfg,' + ','.join(configstr) + '\n'
+                    f.seek(0)
+                    f.writelines(lines)
+                    return
+                elif 'export MANGOHUD_CONFIGFILE=' in line:
+                    config_line=index
+
+            # 如果找不到相关行，则在export MANGOHUD_CONFIGFILE=的下一行添加,如果没有则在文件末尾添加新行
+            if config_line!=-1:
+                lines.insert(config_line+1, 'export MANGOHUD_CONFIG=read_cfg,' + ','.join(configstr) + '\n')
+                f.seek(0)
+                f.writelines(lines)
+            else:
+                f.write('export MANGOHUD_CONFIG=read_cfg,' + ','.join(configstr) + '\n')
+
+    def remove_session_config(self):
+        with open('/usr/bin/gamescope-session', 'r+') as f:
+            try:
+                lines = f.readlines()
+                f.seek(0)
+                # 清空文件内容
+                f.truncate()
+                # 除了MANGOHUD_CONFIG以外的行重新写入
+                for line in lines:
+                    if 'export MANGOHUD_CONFIG=' not in line:
+                        f.write(line)
+            except:
+                f.writelines(lines)
 
     def _registerConfigNotifier(self):
         try:
