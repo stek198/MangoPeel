@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { PanelSectionRow, Field } from 'decky-frontend-lib';
 import { RiArrowDownSFill, RiArrowUpSFill } from 'react-icons/ri';
+import { LocalizationManager, localizeStrEnum } from '../i18n';
 
 const Arrow = ({ direction, show }: { direction: any, show: any }) => {
   return (
@@ -13,11 +14,9 @@ const Arrow = ({ direction, show }: { direction: any, show: any }) => {
 };
 
 function ResortableList({
-  title,
   initialArray,
   onArrayChange,
 }: {
-  title: string;
   initialArray: { label: string; value: string }[];
   onArrayChange: (newArray: { label: string; value: string }[]) => void;
 }) {
@@ -63,16 +62,6 @@ function ResortableList({
 
   return (
     <>
-      <PanelSectionRow>
-        <Field
-          bottomSeparator="none"
-          label={
-            <div style={{ width: '100%', textAlign: 'center' }}>
-              {title}
-            </div>
-          }
-        />
-      </PanelSectionRow>
       {items.map((item, index) => (
         <PanelSectionRow key={index}>
           <Field
@@ -98,7 +87,11 @@ function ResortableList({
                 />
               </>
             }
-            highlightOnFocus
+            actionDescriptionMap={{
+              1:currentIndex === index?LocalizationManager.getString(localizeStrEnum.RESORT_END_DESCRIPTION):LocalizationManager.getString(localizeStrEnum.RESORT_SELECT_DESCRIPTION),
+              9:currentIndex === index && index !== 0?LocalizationManager.getString(localizeStrEnum.RESORT_MOVEUP_DESCRIPTION):undefined,
+              10:currentIndex === index && index !== items.length - 1?LocalizationManager.getString(localizeStrEnum.RESORT_MOVEDOWN_DESCRIPTION):undefined,
+            }}
             onActivate={() => handleSelectItem(index)}
             onGamepadFocus={() => onItemFocus(index)}
             onGamepadBlur={() => onItemBlur(index)}

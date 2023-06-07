@@ -137,15 +137,14 @@ const ParamPatchItem: VFC<{ paramName: ParamName, patch: ParamPatch; patchIndex:
     case ParamPatchType.resortableList:
       return (
         <>
-            <ResortableList title={LocalizationManager.getString(localizeStrEnum.PARAM_MANUALLY_SORT_TITLE)} initialArray={selectedValue.map((value: any)=>{
+            <ResortableList initialArray={selectedValue.map((value: any)=>{
               return {label:patch.args.filter((item)=>{ return value==item.value})?.[0]?.label??"not_find",value:value};
             })}
             onArrayChange={(newArray)=>{
               var value = newArray.map((item)=>{
                 return item.value;
               })
-              setSelectedValue(value);
-              Settings.setParamValue(paramName,patchIndex,value);
+              updateSelectedValue(value);
             }}/>
         </>
       );
