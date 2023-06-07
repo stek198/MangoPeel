@@ -32,17 +32,12 @@ steam_config=[
     ]
 ]
 
-#日志配置
-try:
-    LOG_LOCATION = "/tmp/MangoPeel.log"
-    logging.basicConfig(
-        level = logging.DEBUG,
-        filename = LOG_LOCATION,
-        format="[%(asctime)s | %(filename)s:%(lineno)s:%(funcName)s] %(levelname)s: %(message)s",
-        filemode = 'w',
-        force = True)
-except Exception as e:
-    logging.error(f"日志配置异常|{e}")
+logging.basicConfig(
+    level=logging.DEBUG,
+    filename='/tmp/MangoPeel.log',
+    format="[%(asctime)s | %(filename)s:%(lineno)s:%(funcName)s] %(levelname)s: %(message)s",
+    filemode='w'
+)
 
 class MangoPeel:
     class ConfigEventHandler(pyinotify.ProcessEvent):
@@ -110,40 +105,45 @@ class MangoPeel:
                 continue
         return False
     
-    def update_session_config(self,configstr):
+    def update_session_config(self,configstr:list):
         with open('/usr/bin/gamescope-session', 'r+') as f:
             lines = f.readlines()
-            config_line=-1;
-            # 查找相关行，并覆写设置
-            for index, line in enumerate(lines):
-                if 'export MANGOHUD_CONFIG=' in line:
-                    lines[index] = 'export MANGOHUD_CONFIG=read_cfg,' + ','.join(configstr) + '\n'
+            try:
+                config_line=-1
+                # 查找相关行，并覆写设置
+                for index, line in enumerate(lines):
+                    if 'export MANGOHUD_CONFIG=' in line:
+                        lines[index] = 'export MANGOHUD_CONFIG=read_cfg,' + ','.join(configstr) + '\n'
+                        f.seek(0)
+                        f.writelines(lines)
+                        return
+                    elif 'export MANGOHUD_CONFIGFILE=' in line:
+                        config_line=index
+
+                # 如果找不到相关行，则在export MANGOHUD_CONFIGFILE=的下一行添加,如果没有则在文件末尾添加新行
+                if config_line!=-1:
+                    lines.insert(config_line+1, 'export MANGOHUD_CONFIG=read_cfg,' + ','.join(configstr) + '\n')
                     f.seek(0)
                     f.writelines(lines)
-                    return
-                elif 'export MANGOHUD_CONFIGFILE=' in line:
-                    config_line=index
-
-            # 如果找不到相关行，则在export MANGOHUD_CONFIGFILE=的下一行添加,如果没有则在文件末尾添加新行
-            if config_line!=-1:
-                lines.insert(config_line+1, 'export MANGOHUD_CONFIG=read_cfg,' + ','.join(configstr) + '\n')
+                else:
+                    f.write('export MANGOHUD_CONFIG=read_cfg,' + ','.join(configstr) + '\n')
+            except:
+                #把原内容重新写入
                 f.seek(0)
                 f.writelines(lines)
-            else:
-                f.write('export MANGOHUD_CONFIG=read_cfg,' + ','.join(configstr) + '\n')
 
     def remove_session_config(self):
         with open('/usr/bin/gamescope-session', 'r+') as f:
+            lines = f.readlines()
             try:
-                lines = f.readlines()
                 f.seek(0)
-                # 清空文件内容
-                f.truncate()
                 # 除了MANGOHUD_CONFIG以外的行重新写入
                 for line in lines:
                     if 'export MANGOHUD_CONFIG=' not in line:
                         f.write(line)
             except:
+                #把原内容重新写入
+                f.seek(0)
                 f.writelines(lines)
 
     def _registerConfigNotifier(self):

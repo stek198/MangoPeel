@@ -1,115 +1,114 @@
 import { useEffect, useRef, useState } from 'react';
-import { PanelSectionRow, Field,} from 'decky-frontend-lib';
-import { RiArrowDownSFill, RiArrowUpSFill} from 'react-icons/ri';
+import { PanelSectionRow, Field } from 'decky-frontend-lib';
+import { RiArrowDownSFill, RiArrowUpSFill } from 'react-icons/ri';
 
-const Arrow = ({direction, show }:{direction:any, show:any }) => {
-  if (!show) {
-    return null;
-  }
+const Arrow = ({ direction, show }: { direction: any, show: any }) => {
   return (
-    <span style={{ height:20 }}>
-      {direction === 'up' ? <RiArrowUpSFill /> : <RiArrowDownSFill />}
-    </span>
+    show && (
+      <span style={{ height: 20 }}>
+        {direction === 'up' ? <RiArrowUpSFill /> : <RiArrowDownSFill />}
+      </span>
+    )
   );
 };
 
 function ResortableList({
-    title,
-    initialArray,
-    onArrayChange,
-  }: {
-    title:string,
-    initialArray:{label:string,value:string}[],
-    onArrayChange:(newArray:{label:string,value:string}[])=>void,
-  }) {
+  title,
+  initialArray,
+  onArrayChange,
+}: {
+  title: string;
+  initialArray: { label: string; value: string }[];
+  onArrayChange: (newArray: { label: string; value: string }[]) => void;
+}) {
   const [currentIndex, setCurrentIndex] = useState(-1);
   const currentIndexRef = useRef(currentIndex);
   const [items, setItems] = useState(initialArray);
 
-  useEffect(()=>{
+  useEffect(() => {
     currentIndexRef.current = currentIndex;
-  },[currentIndex])
+  }, [currentIndex]);
+
   useEffect(() => {
     setItems(initialArray);
   }, [initialArray]);
-  const handleSelectItem = (index:number) => {
-    if (currentIndex === index) {
-      setCurrentIndex(-1);
-    } else {
+
+  const handleSelectItem = (index: number) => {
+    setCurrentIndex(currentIndex === index ? -1 : index);
+  };
+
+  const handleChangeItem = (oldIndex: number, newIndex: number) => {
+    if (oldIndex !== newIndex) {
+      const newArray = [...items];
+      [newArray[oldIndex], newArray[newIndex]] = [newArray[newIndex], newArray[oldIndex]];
+      setItems(newArray);
+      onArrayChange(newArray);
+    }
+  };
+
+  const onItemFocus = (index: number) => {
+    if (currentIndexRef.current >= 0) {
+      handleChangeItem(currentIndexRef.current, index);
       setCurrentIndex(index);
     }
   };
 
-  const handleChangeItem = (oldIndex:number,newIndex:number) => {
-    if(oldIndex!=newIndex){
-      var newArray = items.slice();
-      var temp = newArray[newIndex];
-      newArray[newIndex] = newArray[oldIndex];
-      newArray[oldIndex] = temp;
-      setItems(newArray);
-      onArrayChange(newArray);
-    }
-  }
-
-  const onItemFocus = (index:number)=>{
-    if(currentIndexRef.current>=0){
-      handleChangeItem(currentIndexRef.current,index);
-      setCurrentIndex(index);
-    }
-  }
-  const onItemBlur = (index:number)=>{
-    setTimeout(()=>{
-      if(currentIndexRef.current==index){
+  const onItemBlur = (index: number) => {
+    setTimeout(() => {
+      if (currentIndexRef.current === index) {
         setCurrentIndex(-1);
       }
-    },50)
-  }
+    }, 50);
+  };
 
   return (
     <>
       <PanelSectionRow>
-        <Field bottomSeparator={"none"}
-        label={
-            <div style={{
-                  width:"100%",
-                  textAlign:"center",
-            }}>
-            {title}
-          </div>
-        }
-        >
-        </Field>
+        <Field
+          bottomSeparator="none"
+          label={
+            <div style={{ width: '100%', textAlign: 'center' }}>
+              {title}
+            </div>
+          }
+        />
       </PanelSectionRow>
       {items.map((item, index) => (
         <PanelSectionRow key={index}>
-              <Field
-              bottomSeparator={"none"}
-              icon={
+          <Field
+            bottomSeparator="none"
+            icon={
               <>
-                <Arrow direction="up" show={currentIndex == index && index != 0} />
-                  <div style={{
-                    backgroundColor:"#ffffff",
-                    width:20,
-                    height:20,
-                    borderRadius:30,
-                    textAlign:"center",
-                    color:"#000000",
-                  }}>{index+1}</div>
-                  <Arrow direction="down" show={currentIndex == index && index != items.length - 1} />
-              </>}
-              highlightOnFocus={true}
-              onActivate={() => handleSelectItem(index)}
-              onGamepadFocus={()=>onItemFocus(index)}
-              onGamepadBlur={()=>onItemBlur(index)}
-              >
-              <div style={{
-                width:190,
-                textAlign:"center",
-              }}>{item.label}</div>
-              </Field>
+                <Arrow direction="up" show={currentIndex === index && index !== 0} />
+                <div
+                  style={{
+                    backgroundColor: '#ffffff',
+                    width: 20,
+                    height: 20,
+                    borderRadius: 30,
+                    textAlign: 'center',
+                    color: '#000000',
+                  }}
+                >
+                  {index + 1}
+                </div>
+                <Arrow
+                  direction="down"
+                  show={currentIndex === index && index !== items.length - 1}
+                />
+              </>
+            }
+            highlightOnFocus
+            onActivate={() => handleSelectItem(index)}
+            onGamepadFocus={() => onItemFocus(index)}
+            onGamepadBlur={() => onItemBlur(index)}
+          >
+            <div style={{ width: 190, textAlign: 'center' }}>{item.label}</div>
+          </Field>
         </PanelSectionRow>
       ))}
     </>
   );
-};
+}
+
 export default ResortableList;

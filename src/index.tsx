@@ -9,7 +9,7 @@ import {
 import { VFC,useEffect,useState} from "react";
 import { FaBorderStyle } from "react-icons/fa";
 import { MangoIndex, ParamItem } from "./components";
-import { localizationManager, localizeStrEnum } from "./i18n";
+import { LocalizationManager, localizeStrEnum } from "./i18n";
 import { ParamGroup, PluginManager, Settings} from "./util";
 import { paramList } from "./util/config";
 
@@ -53,7 +53,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({}) => {
             onClick={() => {
               Settings.resetParamDefault();
             }}>
-            {localizationManager.getString(localizeStrEnum.RESET_PARAM_DEFAULT)}
+            {LocalizationManager.getString(localizeStrEnum.RESET_PARAM_DEFAULT)}
             </ButtonItem>
         </PanelSectionRow>
       </PanelSection>
