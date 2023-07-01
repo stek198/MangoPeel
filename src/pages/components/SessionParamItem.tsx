@@ -1,14 +1,14 @@
 import { DropdownItem, PanelSectionRow, ToggleField,SliderField,showModal,ButtonItem } from "decky-frontend-lib";
 import { useEffect, useState, VFC } from "react";
 import { RiArrowDownSFill, RiArrowUpSFill} from 'react-icons/ri';
-import { ParamName, ParamPatchType, Settings } from "../util";
-import { ParamData, ParamPatch } from "../util/interface";
-import { SlowSliderField } from "./SlowSliderField";
-import {TextInputModal} from "./TextInputModal";
-import ResortableList from "./resortableList";
-import { LocalizationManager, localizeStrEnum } from "../i18n";
+import { ParamPatchType, Settings} from "../../util";
+import { SlowSliderField,TextInputModal } from "../../components";
+import ResortableList from "../../components/ResortableList";
+import { LocalizationManager, localizeStrEnum } from "../../i18n";
+import { SessionParamData, SessionParamPatch } from "../util/interface";
+import { SessionParamName } from "../util/enum";
 
-const ParamPatchItem: VFC<{ paramName: ParamName, patch: ParamPatch; patchIndex: number }> = ({ paramName, patch, patchIndex }) => {
+const SessionParamPatchItem: VFC<{ paramName: SessionParamName, patch: SessionParamPatch; patchIndex: number }> = ({ paramName, patch, patchIndex }) => {
 
   const [selectedValue, setSelectedValue] = useState(Settings.getParamValue(paramName, patchIndex));
   const [selectedIndex, setSelectedIndex] = useState(patch.args.indexOf(selectedValue));
@@ -28,8 +28,55 @@ const ParamPatchItem: VFC<{ paramName: ParamName, patch: ParamPatch; patchIndex:
 
   const updateSelectedValue = (value: any) => {
     setSelectedValue(value);
-    Settings.setParamValue(paramName, patchIndex, value);
-  };
+  };public static setParamValue(paramName:SessionParamName,patchIndex:number,paramValue:any){
+    var paramValues=this.getParamValues(paramName);
+    if(patchIndex>=paramValues.length){
+      paramValues=this.getDefaultParamValues(paramName);
+    }
+    if(patchIndex>=0&&patchIndex<paramValues.length&&paramValue!=paramValues[patchIndex]){
+      paramValues[patchIndex]=paramValue;
+      this.ensureSettings().setParamValues(paramName,paramValues);
+      Settings.saveSettingsToLocalStorage();
+      Backend.applyConfig(this.getSettingsIndex(),this.getParamConfig());
+      //this.settingChangeEventBus.dispatchEvent(new Event(paramName))
+    }
+  }
+
+  public static getParamValues(paramName:SessionParamName,patchIndex:number){
+    var paramValues=this.ensureSettings().getParamValues(paramName);
+    //参数值无效时，重设置为默认值
+    if(!this.isValidParamValue(paramValues,paramName,patchIndex)){
+      paramValues=this.getDefaultParamValues(paramName);
+      this.ensureSettings().setParamValues(paramName,paramValues);
+    }
+    return paramValues[patchIndex];
+  }
+
+  public static setParamEnable(paramName:SessionParamName,bEnable:boolean,bforce?:boolean){
+    if(bEnable!=this.getParamEnable(paramName)||(bforce??false)){
+      this.ensureSettings().setParamEnable(paramName,bEnable);
+      var updateParamList=this.updateParamVisible(paramName);
+      var updateGroupList:ParamGroup[]=[];
+      //刷新前置参数包含此参数的组件
+      updateParamList.forEach((paramName)=>{
+        //刷新组件
+        this.settingChangeEventBus.dispatchEvent(new Event(paramName));
+        if(updateGroupList.indexOf(paramList[paramName].group)==-1){
+          updateGroupList.push(paramList[paramName].group);
+        }
+      })
+      //刷新对应的参数组标题
+      updateGroupList.forEach((groupName)=>{
+        this.settingChangeEventBus.dispatchEvent(new Event(groupName));
+      })
+      Settings.saveSettingsToLocalStorage();
+      Backend.applyConfig(this.getSettingsIndex(),this.getParamConfig());
+    }
+  }
+
+  public static getParamEnable(paramName:SessionParamName){
+    return this._instance.sessionParamInfos[paramName].bEnable;
+  }
 
   switch (patch.type) {
     case ParamPatchType.slider:
@@ -153,14 +200,12 @@ const ParamPatchItem: VFC<{ paramName: ParamName, patch: ParamPatch; patchIndex:
   }
 };
 
-export const ParamItem: VFC<{ paramData: ParamData}> = ({paramData}) => {
+export const SessionParamItem: VFC<{ paramData: SessionParamData}> = ({paramData}) => {
       const [enable, setEnable] = useState(Settings.getParamEnable(paramData.name));
-      const [visible,setVisible] = useState(Settings.getParamVisible(paramData.name));
       const [showPatch,setShowPatch] = useState(false);
       const updateEvent=()=>{
         //console.log(`enable=${enable} new_enable=${new_enable}`);
         setEnable(Settings.getParamEnable(paramData.name));
-        setVisible(Settings.getParamVisible(paramData.name));
       }
       useEffect(()=>{
         Settings.settingChangeEventBus.addEventListener(paramData.name,updateEvent);
@@ -169,7 +214,6 @@ export const ParamItem: VFC<{ paramData: ParamData}> = ({paramData}) => {
       }
       },[])
       return (
-        visible?
         <>
           <PanelSectionRow>
             <ToggleField
@@ -186,7 +230,7 @@ export const ParamItem: VFC<{ paramData: ParamData}> = ({paramData}) => {
           {showPatch&&(paramData.toggle.isShowPatchWhenEnable??true)==enable&&paramData.patchs?.length > 0 ? (
             <>
               {paramData.patchs?.map((e,patchIndex) => (
-                <ParamPatchItem paramName={paramData.name} patch={e} patchIndex={patchIndex}/>
+                <SessionParamPatchItem paramName={paramData.name} patch={e} patchIndex={patchIndex}/>
               ))}
             </>
           ) : null}
@@ -211,6 +255,6 @@ export const ParamItem: VFC<{ paramData: ParamData}> = ({paramData}) => {
                     </ButtonItem>
           </PanelSectionRow>
           }
-        </>:<></>
+        </>
       );
 };

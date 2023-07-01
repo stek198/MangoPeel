@@ -1,4 +1,5 @@
 import { JsonObject, JsonProperty, JsonSerializer } from 'typescript-json-serializer';
+import { SessionParamName } from '../pages/util/enum';
 import { Backend } from './backend';
 import { paramList } from './config';
 import { ParamGroup, ParamName, ParamPatchType} from './enum';
@@ -300,7 +301,7 @@ export class Settings {
   }
 
   public static resetParamDefault(){
-    Object.entries(paramList).filter(([paramName]) => {
+    Object.keys(paramList).map((paramName) => {
       this.ensureSettings().setParamValues(paramName as ParamName,this.ensureSettings().getParamValueDefault(paramName as ParamName,this._steamIndex));
       this.setParamEnable(paramName as ParamName,this.ensureSettings().getParamEnableDefault(paramName as ParamName,this._steamIndex),true);
       this.settingChangeEventBus.dispatchEvent(new Event(paramName));
@@ -421,4 +422,45 @@ export class Settings {
     localStorage.setItem(SETTINGS_KEY, settingsString);
   }
 
+}
+
+export class PageSetting {
+  private static _instance = new PageSetting();
+  @JsonProperty({ isDictionary: true, type: ParamInfo })
+  public sessionParamInfos: Record<string, ParamInfo> = {};
+
+  public static async init(): Promise<void> {
+    //加载保存值
+    this.loadSettingsFromLocalStorage();
+  }
+
+  public static loadSettingsFromLocalStorage(){
+    const settingsString = localStorage.getItem(SETTINGS_KEY) || "{}";
+    const settingsJson = JSON.parse(settingsString);
+    const loadSetting=serializer.deserializeObject(settingsJson, PageSetting);
+    //确保有默认值
+    for (const paramName of Object.values(SessionParamName)) {
+      if (!this._instance.sessionParamInfos[paramName]) {
+        this._instance.sessionParamInfos[paramName] = new ParamInfo(
+          paramName,
+          false,
+          [],
+        );
+      }
+    }
+    //加载保存值
+    if(loadSetting?.sessionParamInfos){
+      for (const sessionParam of Object.values(this._instance.sessionParamInfos)) {
+        if (sessionParam.paramName in loadSetting?.sessionParamInfos) {
+          this._instance.sessionParamInfos[sessionParam.paramName] = loadSetting?.sessionParamInfos[sessionParam.paramName];
+        }
+      }
+    }
+  }
+
+  public static saveSettingsToLocalStorage() {
+    const settingsJson = serializer.serializeObject(this._instance);
+    const settingsString = JSON.stringify(settingsJson);
+    localStorage.setItem(SETTINGS_KEY, settingsString);
+  }
 }

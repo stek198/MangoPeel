@@ -20,8 +20,8 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({}) => {
         <MangoIndex></MangoIndex>
       </PanelSection>
       <>{
-        Object.entries(ParamGroup).map(([_key,groupName])=>{
-          var groupItem=Object.entries(paramList).filter(([_paramName, paramData]) => {
+        Object.values(ParamGroup).map((groupName)=>{
+          var groupItem=Object.values(paramList).filter((paramData) => {
             return paramData.group==groupName;
           })
           const [visible,setVisible] = useState(Settings.getGroupVisible(groupName));
@@ -36,7 +36,7 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({}) => {
           },[])
           return groupItem.length>0&&visible?(
           <PanelSection title={groupName}>
-          {groupItem.map(([_paramName, paramData])=>{
+          {groupItem.map((paramData)=>{
             return(
               <>
                 <ParamItem paramData={paramData}></ParamItem>
@@ -57,22 +57,29 @@ const Content: VFC<{ serverAPI: ServerAPI }> = ({}) => {
             </ButtonItem>
         </PanelSectionRow>
       </PanelSection>
+      <PanelSection>
+        <PanelSectionRow>
+            <ButtonItem
+            layout="below"
+            onClick={() => {
+              PluginManager.openPluginPage();
+            }}>
+            {LocalizationManager.getString(localizeStrEnum.PLUGIN_MANAGE_PAGE)}
+            </ButtonItem>
+        </PanelSectionRow>
+      </PanelSection>
     </>
   );
 };
 
 export default definePlugin((serverApi: ServerAPI) => {
   PluginManager.register(serverApi);
-  serverApi!.callPluginMethod<{},boolean>("ReloadConfigPath",{}).then(res=>{
-    if (res.success){
-      console.info("ReloadConfigPath = " + res.result);
-    }
-  })
   return {
     title: <div className={staticClasses.Title}>MangoPeel</div>,
     content: <Content serverAPI={serverApi} />,
     icon: <FaBorderStyle />,
     onDismount() {
+      PluginManager.unregister(serverApi);
     },
   };
 });
