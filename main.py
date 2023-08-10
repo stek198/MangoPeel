@@ -30,7 +30,7 @@ steam_config=[
     ]
 ]
 
-#日志配置
+#Log configuration
 logging.basicConfig(
     level = logging.DEBUG,
     filename = "/tmp/MangoPeel.log",
@@ -52,25 +52,25 @@ class MangoPeel:
             self._mangoapp=mangoapp
 
         def process_IN_MODIFY(self, event):
-            self._mangoapp.overWriteConfig()     #覆盖当前的配置
+            self._mangoapp.overWriteConfig()     #Overwrite the current configuration
 
     def __init__(self):
-        self._procPath=""    #proc路径
-        self._appPid=""     #进程PID
+        self._procPath=""    #proc path
+        self._appPid=""     #processPID
         self._appcmdLine=""     #cmdline
-        self._configPath=""      #mangoapp配置文件路径
-        self._configMonitor = pyinotify.WatchManager()  #配置监视
-        self._setConfigList=["","","","",""]       #要设置的mangoapp配置
+        self._configPath=""      #mangoapp Configuration file path
+        self._configMonitor = pyinotify.WatchManager()  #Configuration monitoring
+        self._setConfigList=["","","","",""]       #To set up mangoapp configuration
         self._steamIndex=-1
         self._bmangoapp_steam=True
-        self._findConfig=False        #是否找到配置文件
-        self._findInterval=2     #未找到配置时 间隔多久再找一次
-        self._findCount=0   #当前找几次
-        self._maxFindCount=3    #最多找几次
+        self._findConfig=False        #Whether to find the configuration file
+        self._findInterval=2     #When the configuration is not found, how long does it take to find it again?
+        self._findCount=0   #How many times are you looking for
+        self._maxFindCount=3    #Find it a few times at most
 
-        self.findConfigPath()   #加载文件路径
-        self.overWriteConfig()     #覆盖当前的配置
-        self._registerConfigNotifier()  #注册文件监听
+        self.findConfigPath()   #Load file path
+        self.overWriteConfig()     #Overwrite the current configuration
+        self._registerConfigNotifier()  #Registration file monitoring
 
     def findConfigPath(self):
         procPath="/proc"
@@ -85,13 +85,13 @@ class MangoPeel:
                     self._procPath = appProcPath
                     self._appPid = appPid
                     self._appcmdLine = appCmdLine
-                    logging.info(f"找到mangoapp配置项 appPid={appPid} appCmdLine={appCmdLine} ")
+                    logging.info(f"Find the mangoapp configuration item appPid={appPid} appCmdLine={appCmdLine} ")
                     findCmd=True
                     break
             except:
                 continue
         if not findCmd:
-            logging.error(f"未找到mangoapp配置路径={self._configPath}")
+            logging.error(f"mangoapp configuration path not found={self._configPath}")
             time.sleep(self._findInterval)
             if self._findCount + 1 < self._maxFindCount:
                 self._findCount = self._findCount + 1
@@ -106,7 +106,7 @@ class MangoPeel:
                     self._configPath=appEnv.split("=")[1]
                     self._findConfig = True
                     self._configMonitor.add_watch(self._configPath, pyinotify.IN_MODIFY, rec=True)
-                    logging.info(f"找到mangoapp配置路径 MANGOHUD_CONFIGFILE={self._configPath}")
+                    logging.info(f"Find mangoapp configuration path MANGOHUD_CONFIGFILE={self._configPath}")
                     return True
             except:
                 continue
@@ -143,7 +143,7 @@ class MangoPeel:
             return
         try:
             if index >= len(self._setConfigList) or index < 0:
-                logging.error(f"非法的configs下标：{index}")
+                logging.error(f"Illegal configs index：{index}")
                 return
             self._setConfigList[index]=config
         except Exception as e:
@@ -154,7 +154,7 @@ class MangoPeel:
             if not self._findConfig:
                 return
             nowConfig = open(self._configPath, "r").read().strip()
-            #没有mangopeel的标签 则查找是否是steam写入的配置 并记录下标
+            #If there is no mangopeel label, find out if it is the configuration written by steam and record the index
             if not nowConfig.startswith("mangopeel_flag"):
                 for index in range(len(steam_config)):
                     if nowConfig in steam_config[index]:

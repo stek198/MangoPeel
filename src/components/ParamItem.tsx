@@ -49,7 +49,7 @@ const ParamPatchItem: VFC<{ paramName: ParamName, patch: ParamPatch; patchIndex:
           </PanelSectionRow>
           <style>
             {
-              //缩短滑动条
+              //Shorten the slider
               `#MangoPeel_Slider 
               .gamepaddialog_Field_S-_La.gamepaddialog_ChildrenWidthFixed_1ugIU 
               .gamepaddialog_FieldChildren_14_HB{
@@ -57,7 +57,7 @@ const ParamPatchItem: VFC<{ paramName: ParamName, patch: ParamPatch; patchIndex:
               }`
             }
             {
-              //调整标签位置
+              //Adjust label position
               `#MangoPeel_Slider 
               .gamepadslider_DescriptionValue_2oRwF {
                 width: 43px;

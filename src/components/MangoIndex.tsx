@@ -47,7 +47,7 @@ export const MangoIndex: VFC = () => {
           </PanelSectionRow>
           <style>
             {
-              //底部标签置为灰色
+              //The bottom label is set to gray
               `#MangoPeel_IndexSlider
               .gamepadslider_SliderNotchTick_Fv1Ht.gamepadslider_TickActive_1gnUV {
                   background-color: #8b929a;
